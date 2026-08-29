@@ -4,96 +4,96 @@
   "n_test": 800,
   "metrics": {
     "RandomForest": {
-      "MAE": 5.1624187500000005,
-      "RMSE": 7.4240129499651335,
-      "R2": 0.5014920985986353
+      "MAE": 4.49170625,
+      "RMSE": 6.24950224767941,
+      "R2": 0.5784230591692656
     },
     "XGBoost": {
-      "MAE": 4.793195724487305,
-      "RMSE": 6.850620948881488,
-      "R2": 0.5755226612091064
+      "MAE": 4.011080741882324,
+      "RMSE": 5.543079721900519,
+      "R2": 0.668343722820282
     }
   },
   "feature_importance": [
     {
       "feature": "volume",
-      "importance": 0.20839348435401917
+      "importance": 0.24644069373607635
     },
     {
       "feature": "price_diff_3",
-      "importance": 0.10581587255001068
+      "importance": 0.13317488133907318
     },
     {
       "feature": "price_diff_2",
-      "importance": 0.09687023609876633
-    },
-    {
-      "feature": "customers",
-      "importance": 0.08018243312835693
+      "importance": 0.11858323961496353
     },
     {
       "feature": "price_diff_1",
-      "importance": 0.07046443969011307
+      "importance": 0.09699194878339767
+    },
+    {
+      "feature": "customers",
+      "importance": 0.05658939853310585
     },
     {
       "feature": "unit_price",
-      "importance": 0.03438432142138481
+      "importance": 0.039909884333610535
     },
     {
       "feature": "product_name_lenght",
-      "importance": 0.03394497558474541
-    },
-    {
-      "feature": "comp_2",
-      "importance": 0.03201683610677719
-    },
-    {
-      "feature": "product_description_lenght",
-      "importance": 0.030341876670718193
+      "importance": 0.03652273491024971
     },
     {
       "feature": "comp_3",
-      "importance": 0.03030739724636078
+      "importance": 0.032579205930233
     },
     {
-      "feature": "product_score",
-      "importance": 0.029642578214406967
-    },
-    {
-      "feature": "product_weight_g",
-      "importance": 0.026170862838625908
-    },
-    {
-      "feature": "comp_1",
-      "importance": 0.02346615307033062
+      "feature": "product_description_lenght",
+      "importance": 0.031285952776670456
     },
     {
       "feature": "product_photos_qty",
-      "importance": 0.023063713684678078
+      "importance": 0.02676175907254219
+    },
+    {
+      "feature": "product_score",
+      "importance": 0.026596983894705772
+    },
+    {
+      "feature": "comp_2",
+      "importance": 0.0264726709574461
+    },
+    {
+      "feature": "product_weight_g",
+      "importance": 0.026274649426341057
+    },
+    {
+      "feature": "comp_1",
+      "importance": 0.01959105022251606
     },
     {
       "feature": "lag_price",
-      "importance": 0.02297842688858509
-    },
-    {
-      "feature": "fp2",
-      "importance": 0.01662757806479931
+      "importance": 0.016098450869321823
     },
     {
       "feature": "fp3",
-      "importance": 0.015633169561624527
+      "importance": 0.007611765060573816
     },
     {
       "feature": "holiday",
-      "importance": 0.015615510754287243
+      "importance": 0.007248606998473406
     },
     {
-      "feature": "fp1",
-      "importance": 0.014903071336448193
+      "feature": "fp2",
+      "importance": 0.007019961252808571
     },
     {
       "feature": "s",
-      "importance": 0.014832215383648872
+      "importance": 0.006739811971783638
+    },
+    {
+      "feature": "fp1",
+      "importance": 0.006366517394781113
     }
   ]
 }
