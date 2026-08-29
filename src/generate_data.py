@@ -138,7 +138,7 @@ def generate_frame(n_products: int = 200, months: int = 20,
             elasticity = np.clip(np.log(price_ratio), -0.7, 0.7)
             price_term = np.exp(-1.8 * elasticity)
 
-            noise = rng.lognormal(0, 0.08)
+            noise = rng.lognormal(0, 0.03)
 
             expected_qty = base_demand * season * price_term * noise
             qty = int(max(1, round(expected_qty)))
