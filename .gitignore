@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Notebooks (keep the code, drop bulky outputs)
+.ipynb_checkpoints/
+
+# Data (large files; regenerate locally with src/generate_data.py)
+data/raw/
+data/processed/
+
+# Trained models (regenerate with src/train.py)
+models/*.pkl
+models/*.joblib
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Environment / secrets
+.env
+*.env

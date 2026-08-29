@@ -1,0 +1,99 @@
+{
+  "best_model": "XGBoost",
+  "n_train": 3200,
+  "n_test": 800,
+  "metrics": {
+    "RandomForest": {
+      "MAE": 5.1624187500000005,
+      "RMSE": 7.4240129499651335,
+      "R2": 0.5014920985986353
+    },
+    "XGBoost": {
+      "MAE": 4.793195724487305,
+      "RMSE": 6.850620948881488,
+      "R2": 0.5755226612091064
+    }
+  },
+  "feature_importance": [
+    {
+      "feature": "volume",
+      "importance": 0.20839348435401917
+    },
+    {
+      "feature": "price_diff_3",
+      "importance": 0.10581587255001068
+    },
+    {
+      "feature": "price_diff_2",
+      "importance": 0.09687023609876633
+    },
+    {
+      "feature": "customers",
+      "importance": 0.08018243312835693
+    },
+    {
+      "feature": "price_diff_1",
+      "importance": 0.07046443969011307
+    },
+    {
+      "feature": "unit_price",
+      "importance": 0.03438432142138481
+    },
+    {
+      "feature": "product_name_lenght",
+      "importance": 0.03394497558474541
+    },
+    {
+      "feature": "comp_2",
+      "importance": 0.03201683610677719
+    },
+    {
+      "feature": "product_description_lenght",
+      "importance": 0.030341876670718193
+    },
+    {
+      "feature": "comp_3",
+      "importance": 0.03030739724636078
+    },
+    {
+      "feature": "product_score",
+      "importance": 0.029642578214406967
+    },
+    {
+      "feature": "product_weight_g",
+      "importance": 0.026170862838625908
+    },
+    {
+      "feature": "comp_1",
+      "importance": 0.02346615307033062
+    },
+    {
+      "feature": "product_photos_qty",
+      "importance": 0.023063713684678078
+    },
+    {
+      "feature": "lag_price",
+      "importance": 0.02297842688858509
+    },
+    {
+      "feature": "fp2",
+      "importance": 0.01662757806479931
+    },
+    {
+      "feature": "fp3",
+      "importance": 0.015633169561624527
+    },
+    {
+      "feature": "holiday",
+      "importance": 0.015615510754287243
+    },
+    {
+      "feature": "fp1",
+      "importance": 0.014903071336448193
+    },
+    {
+      "feature": "s",
+      "importance": 0.014832215383648872
+    }
+  ]
+}
