@@ -2,5 +2,5 @@ services:
   app:
     build: .
     ports:
-      - "8501:8501"
+      - "8501:8501"   # Streamlit UI
     restart: unless-stopped

@@ -19,8 +19,13 @@ COPY . .
 RUN python src/generate_data.py \
     && python src/train.py
 
-# Streamlit
+# Expose Streamlit port
 EXPOSE 8501
+
+# Healthcheck for Streamlit
 HEALTHCHECK CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')" || exit 1
 
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Run Streamlit
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+ENTRYPOINT ["/start.sh"]
