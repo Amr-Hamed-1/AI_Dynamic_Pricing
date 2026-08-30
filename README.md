@@ -34,10 +34,12 @@ Dynamic_Pricing_Project/
 │   ├── preprocessing.py    # Cleaning + feature engineering
 │   ├── train.py            # Training + evaluation + model selection + feature importance
 │   ├── optimization.py     # PriceOptimizer (price engine + lift calculation)
+│   ├── backtest.py         # Optimizer backtest on the held-out test set
 │   └── data_loader.py
 ├── models/
 │   ├── best_model.pkl      # Best model (XGBoost)
-│   └── training_report.json # Metrics + feature importance
+│   ├── training_report.json # Metrics + feature importance
+│   └── backtest_report.json # Optimizer backtest summary + per-product results
 └── notebooks/
     └── Cleaning&Eda.ipynb
 ```
@@ -61,9 +63,31 @@ python src/train.py
 # 4. Run optimizer CLI (shows lift)
 python src/optimization.py
 
-# 5. Launch interactive dashboard
+# 5. Backtest the optimizer on the held-out test set (writes models/backtest_report.json)
+python src/backtest.py
+
+# 6. (Optional) Launch interactive dashboard
 streamlit run app.py
 ```
+
+### 📊 Experiment Tracking with MLflow
+
+Every `src/train.py` run logs its metrics, hyperparameters and artifacts to a
+local **MLflow** experiment (`dynamic-pricing`) stored in `sqlite:///mlflow.db`:
+
+- Metrics for both models (RandomForest & XGBoost MAE / RMSE / R²)
+- Split params (temporal, train/test sizes) and the best model name
+- The saved model + training report as run artifacts
+
+View the runs in the web UI:
+
+```bash
+mlflow ui --backend-store-uri sqlite:///mlflow.db
+# open http://localhost:5000
+```
+
+> MLflow is **optional**: if it isn't installed, `train.py` still works and just
+> skips logging. Override the store with the `MLFLOW_TRACKING_URI` env var.
 
 ---
 
@@ -100,6 +124,48 @@ docker compose down
 | **XGBoost**     | **3.73** | **5.24** | **0.70** |
 
 Best model: **XGBoost** (temporal split, R² = 0.70).
+
+### 📈 Optimizer Backtest (held-out test set)
+
+To prove the optimizer actually adds value, `src/backtest.py` evaluates it on
+the **held-out temporal test set** (the 20% of rows the model never trained
+on). For each product it compares the optimizer's recommended price against
+"doing nothing" (keeping the current price):
+
+| Metric                    | Value  |
+|---------------------------|--------|
+| Products evaluated        | 200    |
+| Average profit lift       | **+9.2%** |
+| Products with profit lift | **97%**  |
+
+> This is a **model-based policy backtest**: the demand model acts as the
+> oracle on unseen rows. It is **not** a field A/B test (we don't have real
+> counterfactual experiments), but it demonstrates the pricing policy earns
+> more than keeping prices static — an honest, practical evaluation.
+
+Full per-product results are in `models/backtest_report.json`.
+
+### 🧪 What the model can't prove & how we handle it in production
+
+The backtest proves the pricing **policy** beats static pricing *under the
+model's demand forecasts* — it does **not** prove real-world outcomes. The
+model can't know factors beyond its columns (promotions, ad spend, competitor
+quality, buyer psychology), so "raise the price and sales hold" is an
+*assumption of the model*, not a market fact.
+
+There is no shortcut around that — the only way to validate real revenue is a
+**field A/B test**:
+
+1. Split products into a **treatment** group (apply the optimizer's price) and a
+   **control** group (keep current price).
+2. Measure *actual* profit over a defined window (e.g. 30 days).
+3. If the treatment shows a statistically significant profit lift, roll it out
+   to all products; otherwise, re-train / dampen the optimizer.
+
+So the honest positioning is: **backtest de-risks the model, A/B test validates
+it in the real world.** Because the backtest is run on rows the model never saw
+and the caveat is documented, it's a realistic evaluation — not a hand-waved
+claim.
 
 ---
 
@@ -141,6 +207,10 @@ On every training run, `train.py` writes `models/training_report.json` with:
 - Metrics for each model (MAE, RMSE, R²)
 - Top 20 feature importances
 
+`src/backtest.py` writes `models/backtest_report.json` with:
+- Aggregate profit-lift KPIs (`avg_profit_lift_pct`, `pct_products_improved`, `total_incremental_profit`)
+- Per-product recommended price vs. current price and realized lift
+
 ---
 
 ## ⚠️ Honest Notes
@@ -152,4 +222,4 @@ On every training run, `train.py` writes `models/training_report.json` with:
 
 ---
 
-Built with Python, scikit-learn, XGBoost, Streamlit, Plotly & pandas.
+Built with Python, scikit-learn, XGBoost, Streamlit, Plotly, pandas & MLflow.

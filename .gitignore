@@ -27,3 +27,7 @@ models/*.joblib
 # Environment / secrets
 .env
 *.env
+
+# MLflow experiment tracking store (regenerate with src/train.py)
+mlruns/
+mlflow.db

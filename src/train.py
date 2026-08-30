@@ -23,6 +23,15 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV
 from xgboost import XGBRegressor
 
+# Optional MLflow experiment tracking. Training still works without it (e.g.
+# in the minimal Docker build) — MLflow just logs when available.
+try:  # pragma: no cover - environment dependent
+    import mlflow
+    _HAS_MLFLOW = True
+except ImportError:  # pragma: no cover
+    mlflow = None
+    _HAS_MLFLOW = False
+
 TARGET = "qty"
 # Columns that are either the target, leak the target, or shouldn't be features
 COLUMNS_TO_DROP = [
@@ -127,6 +136,31 @@ def train_model() -> None:
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
     print(f"✅ Report written to {report_path}")
+
+    # ---- Optional MLflow experiment tracking ------------------------------
+    if _HAS_MLFLOW:
+        # SQLite backend (MLflow 3.x deprecated the plain ./mlruns file store).
+        mlflow.set_tracking_uri(
+            os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
+        )
+        mlflow.set_experiment("dynamic-pricing")
+        with mlflow.start_run(run_name=f"{best_name}-temporal-split"):
+            for name, m in metrics.items():
+                mlflow.log_metric(f"{name}_MAE", m["MAE"])
+                mlflow.log_metric(f"{name}_RMSE", m["RMSE"])
+                mlflow.log_metric(f"{name}_R2", m["R2"])
+            mlflow.log_params({
+                "split": "temporal",
+                "train_ratio": TRAIN_RATIO,
+                "n_train": int(len(X_train)),
+                "n_test": int(len(X_test)),
+                "best_model": best_name,
+            })
+            mlflow.log_artifact(model_path, artifact_path="model")
+            mlflow.log_artifact(report_path, artifact_path="report")
+            print("✅ Experiment logged to MLflow (mlruns/) "
+                  f"-> run '{mlflow.active_run().info.run_id}'")
+            mlflow.end_run()
 
 
 def _feature_importance(model, feature_names):
