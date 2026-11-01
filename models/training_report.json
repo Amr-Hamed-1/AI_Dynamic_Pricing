@@ -1,99 +1,116 @@
 {
   "best_model": "XGBoost",
-  "n_train": 3200,
-  "n_test": 800,
+  "best_params": {
+    "regressor__colsample_bytree": 0.8,
+    "regressor__learning_rate": 0.05,
+    "regressor__max_depth": 4,
+    "regressor__n_estimators": 400,
+    "regressor__subsample": 0.8
+  },
+  "monotone_constraints": {
+    "unit_price": -1,
+    "price_diff_1": -1,
+    "price_diff_2": -1,
+    "price_diff_3": -1,
+    "price_ratio": -1
+  },
+  "target_transform": "log1p(qty), predictions returned via expm1",
+  "train_period": "2017-01 .. 2018-07",
+  "test_period": "2018-08 .. 2018-12",
+  "n_train": 3800,
+  "n_test": 1000,
   "metrics": {
     "RandomForest": {
-      "MAE": 4.462256249999999,
-      "RMSE": 6.134276931207948,
-      "R2": 0.5889571535531148
+      "MAE": 2.1878699999999998,
+      "RMSE": 3.107834921613437,
+      "R2": 0.9020609564674493
     },
     "XGBoost": {
-      "MAE": 3.7581305503845215,
-      "RMSE": 5.237719022773505,
-      "R2": 0.7003289461135864
+      "MAE": 1.6972806453704834,
+      "RMSE": 2.350426485036292,
+      "R2": 0.9439812302589417
     }
   },
   "feature_importance": [
     {
       "feature": "volume",
-      "importance": 0.3076990842819214
+      "importance": 0.16753967106342316
     },
     {
-      "feature": "price_diff_3",
-      "importance": 0.12861362099647522
+      "feature": "cat_furniture_decor",
+      "importance": 0.13858662545681
+    },
+    {
+      "feature": "cat_consoles_games",
+      "importance": 0.12123475968837738
+    },
+    {
+      "feature": "cat_watches_gifts",
+      "importance": 0.11854121834039688
+    },
+    {
+      "feature": "price_ratio",
+      "importance": 0.11405280232429504
+    },
+    {
+      "feature": "cat_computers_accessories",
+      "importance": 0.07397373765707016
+    },
+    {
+      "feature": "cat_cool_stuff",
+      "importance": 0.040716782212257385
     },
     {
       "feature": "price_diff_2",
-      "importance": 0.1054341197013855
+      "importance": 0.03759865090250969
+    },
+    {
+      "feature": "month",
+      "importance": 0.03449053317308426
     },
     {
       "feature": "price_diff_1",
-      "importance": 0.0909813642501831
+      "importance": 0.033532459288835526
     },
     {
-      "feature": "customers",
-      "importance": 0.050447139889001846
+      "feature": "cat_garden_tools",
+      "importance": 0.029516372829675674
     },
     {
-      "feature": "product_name_lenght",
-      "importance": 0.03803583234548569
+      "feature": "price_diff_3",
+      "importance": 0.01932580955326557
     },
     {
-      "feature": "product_description_lenght",
-      "importance": 0.03710300847887993
+      "feature": "cat_health_beauty",
+      "importance": 0.016070105135440826
     },
     {
       "feature": "unit_price",
-      "importance": 0.034681886434555054
+      "importance": 0.008516339585185051
     },
     {
       "feature": "product_weight_g",
-      "importance": 0.03148793801665306
-    },
-    {
-      "feature": "product_photos_qty",
-      "importance": 0.030955031514167786
-    },
-    {
-      "feature": "comp_2",
-      "importance": 0.028051748871803284
+      "importance": 0.005755763966590166
     },
     {
       "feature": "product_score",
-      "importance": 0.026938753202557564
+      "importance": 0.004758830182254314
     },
     {
-      "feature": "comp_3",
-      "importance": 0.02530779503285885
+      "feature": "product_photos_qty",
+      "importance": 0.0042414795607328415
     },
     {
-      "feature": "comp_1",
-      "importance": 0.017546329647302628
+      "feature": "product_name_lenght",
+      "importance": 0.003872987348586321
     },
     {
-      "feature": "lag_price",
-      "importance": 0.013116546906530857
+      "feature": "product_description_lenght",
+      "importance": 0.003300595097243786
     },
     {
-      "feature": "s",
-      "importance": 0.004664408974349499
-    },
-    {
-      "feature": "ps2",
-      "importance": 0.004087557550519705
-    },
-    {
-      "feature": "fp3",
-      "importance": 0.0037999439518898726
-    },
-    {
-      "feature": "fp2",
-      "importance": 0.0032219355925917625
-    },
-    {
-      "feature": "fp1",
-      "importance": 0.0030952717643231153
+      "feature": "cat_perfumery",
+      "importance": 0.0030291606672108173
     }
   ]
 }

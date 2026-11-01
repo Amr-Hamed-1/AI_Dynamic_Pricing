@@ -1,59 +1,69 @@
 """
-FastAPI wrapper for the Dynamic Pricing Optimizer.
+FastAPI service for the Dynamic Pricing Optimizer.
 
 Endpoints:
-- GET  /health                 -> health check
-- POST /optimize               -> run price optimization for a product
-- GET  /products               -> list available product IDs
-- GET  /model/info             -> model metadata (metrics, features)
+- GET  /health           -> service & model readiness check
+- GET  /products         -> list available SKU IDs
+- GET  /model/info       -> model metadata, training metrics, and monotonic constraints
+- GET  /backtest/summary -> out-of-time policy backtest KPIs
+- POST /optimize         -> compute optimal price, expected demand, profit, and lift
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+import json
 import os
+import sys
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-# Ensure src is on path
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+ROOT = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.join(ROOT, "src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
 from optimization import PriceOptimizer
 
-app = FastAPI(
-    title="Dynamic Pricing API",
-    version="1.0.0",
-    description="REST API for price optimization & demand forecasting",
-)
-
-# Load optimizer once at startup
-ROOT = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(ROOT, "models", "best_model.pkl")
 DATA_PATH = os.path.join(ROOT, "data", "processed", "processed_retail_price.csv")
+TRAIN_REPORT_PATH = os.path.join(ROOT, "models", "training_report.json")
+BACKTEST_REPORT_PATH = os.path.join(ROOT, "models", "backtest_report.json")
 
 optimizer: Optional[PriceOptimizer] = None
 
 
-@app.on_event("startup")
-def load_optimizer():
+def _ensure_loaded() -> PriceOptimizer:
+    global optimizer
+    if optimizer is None and os.path.exists(MODEL_PATH) and os.path.exists(DATA_PATH):
+        optimizer = PriceOptimizer(MODEL_PATH, DATA_PATH)
+    if optimizer is None:
+        raise HTTPException(status_code=503, detail="Optimizer not loaded")
+    return optimizer
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
     global optimizer
     if os.path.exists(MODEL_PATH) and os.path.exists(DATA_PATH):
         optimizer = PriceOptimizer(MODEL_PATH, DATA_PATH)
-    else:
-        # In Docker, data/model are generated at build time, so they should exist.
-        # If not, optimizer stays None and endpoints will 503.
-        pass
+    yield
 
 
-# ---------------------------
-# Schemas
-# ---------------------------
+app = FastAPI(
+    title="Dynamic Pricing API",
+    version="1.1.0",
+    description="REST API for demand forecasting & profit-maximizing price optimization",
+    lifespan=lifespan,
+)
+
+
 class OptimizeRequest(BaseModel):
     product_id: str = Field(..., description="Product ID to optimize for")
     competitor_price: float = Field(..., gt=0, description="Competitor price")
-    product_cost: float = Field(0.0, ge=0, description="Product cost (COGS)")
-    month: int = Field(6, ge=1, le=12, description="Month for seasonality context")
+    product_cost: float = Field(0.0, ge=0, description="Unit cost (COGS)")
+    month: int = Field(6, ge=1, le=12, description="Target month (1-12) for seasonality")
 
 
 class OptimizeResponse(BaseModel):
@@ -78,52 +88,73 @@ class ProductListResponse(BaseModel):
 
 
 class ModelInfoResponse(BaseModel):
+    model_config = {"protected_namespaces": ()}
+
     model_type: str
     n_features: int
     features: list[str]
     metrics: dict
 
 
-# ---------------------------
-# Endpoints
-# ---------------------------
 @app.get("/health")
 def health():
-    return {"status": "ok", "optimizer_loaded": optimizer is not None}
+    try:
+        _ensure_loaded()
+        loaded = True
+    except Exception:
+        loaded = False
+    return {"status": "ok" if loaded else "degraded", "optimizer_loaded": loaded}
 
 
 @app.get("/products", response_model=ProductListResponse)
 def list_products():
-    if optimizer is None:
-        raise HTTPException(503, "Optimizer not loaded")
-    return {"products": optimizer.products}
+    opt = _ensure_loaded()
+    return {"products": opt.products}
 
 
 @app.get("/model/info", response_model=ModelInfoResponse)
 def model_info():
-    if optimizer is None:
-        raise HTTPException(503, "Optimizer not loaded")
-    try:
-        features = list(optimizer.model.feature_names_in_)
-    except AttributeError:
-        features = list(optimizer.model.get_booster().feature_names)
+    opt = _ensure_loaded()
+    metrics_payload: dict = {}
+    if os.path.exists(TRAIN_REPORT_PATH):
+        with open(TRAIN_REPORT_PATH, "r", encoding="utf-8") as f:
+            report = json.load(f)
+            metrics_payload = {
+                "best_model": report.get("best_model"),
+                "train_period": report.get("train_period"),
+                "test_period": report.get("test_period"),
+                "metrics": report.get("metrics", {}),
+                "monotone_constraints": report.get("monotone_constraints", {}),
+            }
     return {
-        "model_type": type(optimizer.model).__name__,
-        "n_features": len(features),
-        "features": features,
-        "metrics": {"note": "See models/training_report.json for full metrics"},
+        "model_type": type(opt.model).__name__,
+        "n_features": len(opt.model_features),
+        "features": opt.model_features,
+        "metrics": metrics_payload,
+    }
+
+
+@app.get("/backtest/summary")
+def backtest_summary():
+    if not os.path.exists(BACKTEST_REPORT_PATH):
+        raise HTTPException(status_code=404, detail="Backtest report not found")
+    with open(BACKTEST_REPORT_PATH, "r", encoding="utf-8") as f:
+        report = json.load(f)
+    return {
+        "method": report.get("method"),
+        "n_products_evaluated": report.get("n_products_evaluated"),
+        "aggregate": report.get("aggregate"),
     }
 
 
 @app.post("/optimize", response_model=OptimizeResponse)
 def optimize(req: OptimizeRequest):
-    if optimizer is None:
-        raise HTTPException(503, "Optimizer not loaded")
+    opt = _ensure_loaded()
 
-    if req.product_id not in optimizer.products:
-        raise HTTPException(404, f"Product {req.product_id} not found")
+    if req.product_id not in opt.products:
+        raise HTTPException(status_code=404, detail=f"Product {req.product_id} not found")
 
-    summary, _ = optimizer.get_optimal_price(
+    summary, _ = opt.get_optimal_price(
         competitor_price=req.competitor_price,
         product_cost=req.product_cost,
         product_id=req.product_id,
@@ -149,9 +180,7 @@ def optimize(req: OptimizeRequest):
     }
 
 
-# ---------------------------
-# Entrypoint for `uvicorn api:app --host 0.0.0.0 --port 8000`
-# ---------------------------
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
